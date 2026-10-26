@@ -7,21 +7,21 @@
 安装包体积较大，统一放在 **Releases** 页面，不随仓库分发：
 
 - 打开仓库右侧的 [Releases](../../releases) 页面
-- 下载 `问星-1.1.0-win64-setup.exe`（推荐，一键安装）
-- 或下载 `问星-1.1.0-win64-完整包.zip`（免安装，解压后双击 `安装.bat`）
-- Android 版：`问星-1.1.0-android.apk`
+- 下载 `wenxing-1.1.0-win64-setup.exe`（推荐，一键安装）
+- 或下载 `wenxing-1.1.0-win64-full.zip`（免安装，解压后双击 `安装.bat`）
+- Android 版：`wenxing-1.1.0-android.apk`
 
 下载后可用 Releases 中附带的 `SHA256SUMS.txt` 校验文件完整性：
 
 ```powershell
-Get-FileHash .\问星-1.1.0-win64-setup.exe -Algorithm SHA256
+Get-FileHash .\wenxing-1.1.0-win64-setup.exe -Algorithm SHA256
 ```
 
 ### Windows 安装步骤
 
 本应用基于 Tauri 2 构建，需要 WebView2 运行时（Win10/11 通常已内置）。
 
-1. 下载 `问星-1.1.0-win64-setup.exe`，双击安装；
+1. 下载 `wenxing-1.1.0-win64-setup.exe`，双击安装；
 2. 若使用「完整包」：**先把 zip 完整解压到一个文件夹**，再双击解压后文件夹里的 `安装.bat`（直接在压缩包预览窗口里双击会提示找不到 `wenxing.exe`）；
 3. 安装完成后桌面会出现「问星」快捷方式，右下角同时出现桌宠悬浮球。
 
