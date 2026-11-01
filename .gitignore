@@ -1,0 +1,65 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+dist-old/
+release/
+target/
+.cargo-target/
+.vite/
+*.tsbuildinfo
+*.log
+*.exe
+*.msi
+
+# 环境与密钥
+.env
+backend-cloud/server/.env
+backend-cloud/server/.env.production
+
+# 部署打包产物
+wenxing-deploy.tar.gz
+_deploy-upload/
+
+# WebView2 调试用的临时用户数据目录
+.tmp-webview/
+
+# 代码签名本地配置（含证书指纹）与证书文件
+frontend-desktop/src-tauri/tauri.signing.conf.json
+*.pfx
+
+# 运行时数据（数据库、台账、文档、上传、语料、备份）
+backend-cloud/data/
+backend-cloud/backups/
+backend-cloud/server/data/
+*.db
+*.db-shm
+*.db-wal
+
+# 测试产物
+frontend-desktop/e2e/report/
+frontend-desktop/e2e/test-results/
+
+# 安装包产物（统一输出目录）
+安装包/
+*.apk
+*.aab
+*.ipa
+
+# Android 签名材料与构建缓存
+*.jks
+*.keystore
+keystore.properties
+frontent-phone/android/.gradle/
+frontent-phone/android/app/build/
+frontent-phone/android/build/
+
+# 开源仓库不包含的内部资料与派生产物
+.trae/
+.trae-html-share-packages/
+.screenshots/
+installer/
+导入包/
+wenxing-v2-roadmap/
+*.zip

@@ -1,0 +1,190 @@
+/* 问星移动端 — 主题令牌子集（自桌面端 styles/variables.css 裁剪）
+   仅星图与桌面风面板引用；Vant 页面继续使用浅色硬编码样式。
+   极夜黑 = 默认（:root），曙光白 = [data-theme="dawn"]。
+   这里不声明 color-scheme，避免影响移动端表单控件的系统配色。 */
+:root {
+  /* 主色 */
+  --wx-color-primary: #818cf8;
+  --wx-color-primary-strong: #6366f1;
+  --wx-color-primary-soft: #a5b4fc;
+
+  /* 辅助色 */
+  --wx-color-yanqing: #2dd4bf;
+  --wx-color-amber: #fbbf24;
+  --wx-color-vermilion: #f87171;
+  --wx-color-zixia: #c084fc;
+  --wx-color-jade: #4ade80;
+
+  /* 学习状态三态 */
+  --wx-state-unknown: #6b7280;
+  --wx-state-light: #fbbf24;
+  --wx-state-deep: #4ade80;
+
+  /* 中性色（极夜黑） */
+  --wx-bg-deep: #000000;
+  --wx-bg-deep-2: #0a0a0f;
+  --wx-bg-mid: #12121a;
+  --wx-ink: #f7f8ff;
+  --wx-text-primary: color-mix(in oklab, var(--wx-ink) 94%, var(--wx-bg-deep));
+  --wx-text-secondary: color-mix(in oklab, var(--wx-ink) 78%, var(--wx-bg-deep));
+  --wx-text-tertiary: color-mix(in oklab, var(--wx-ink) 62%, var(--wx-bg-deep));
+  --wx-text-muted: color-mix(in oklab, var(--wx-ink) 50%, var(--wx-bg-deep));
+  --wx-text-on-accent: #ffffff;
+  --wx-border-soft: rgba(255, 255, 255, 0.06);
+  --wx-border-glow: rgba(100, 220, 255, 0.35);
+
+  /* 玻璃层 */
+  --wx-glass-bg: rgba(10, 10, 20, 0.55);
+  --wx-glass-bg-strong: rgba(10, 10, 20, 0.75);
+  --wx-glass-border: rgba(120, 180, 255, 0.15);
+  --wx-glass-blur: 22px;
+  --wx-glass-radius: 18px;
+  --wx-glass-radius-sm: 12px;
+
+  /* 渐变 */
+  --wx-gradient-primary: linear-gradient(135deg, #00e5ff 0%, #7c4dff 100%);
+  --wx-gradient-amber: linear-gradient(135deg, #fbbf24 0%, #f87171 100%);
+  --wx-gradient-yan: linear-gradient(135deg, #2dd4bf 0%, #818cf8 100%);
+
+  /* 阴影 */
+  --wx-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --wx-shadow-md: 0 10px 32px rgba(0, 0, 0, 0.75);
+  --wx-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.85);
+  --wx-shadow-glow: 0 0 32px rgba(0, 229, 255, 0.3);
+
+  /* 字体 */
+  --wx-font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --wx-font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
+  --wx-font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+
+  /* 动效曲线 */
+  --wx-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --wx-ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --wx-ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --wx-duration-fast: 160ms;
+  --wx-duration-mid: 280ms;
+  --wx-duration-slow: 480ms;
+
+  /* 圆角 */
+  --wx-radius-sm: 8px;
+  --wx-radius-md: 12px;
+  --wx-radius-lg: 18px;
+  --wx-radius-pill: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --wx-ease-spring: linear;
+    --wx-ease-out-soft: linear;
+    --wx-ease-in-out-soft: linear;
+    --wx-duration-fast: 0ms;
+    --wx-duration-mid: 0ms;
+    --wx-duration-slow: 0ms;
+  }
+}
+
+/* ---- 主题 2：曙光白（浅色底 + 日间模式） ---- */
+[data-theme="dawn"] {
+  --wx-bg-deep: #faf8f5;
+  --wx-bg-deep-2: #f0ede6;
+  --wx-bg-mid: #e8e4da;
+  --wx-ink: #171221;
+  --wx-text-on-accent: #2f1808;
+  --wx-border-soft: rgba(0, 0, 0, 0.08);
+  --wx-border-glow: rgba(255, 140, 60, 0.4);
+
+  --wx-glass-bg: rgba(255, 255, 255, 0.65);
+  --wx-glass-bg-strong: rgba(255, 255, 255, 0.85);
+  --wx-glass-border: rgba(0, 0, 0, 0.1);
+
+  --wx-gradient-primary: linear-gradient(135deg, #ff8a5c 0%, #ff5c8a 100%);
+
+  --wx-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --wx-shadow-md: 0 10px 32px rgba(0, 0, 0, 0.12);
+  --wx-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --wx-shadow-glow: 0 0 32px rgba(255, 140, 60, 0.25);
+
+  --wx-color-primary: #ff8a5c;
+  --wx-color-primary-strong: #ff6a3c;
+  --wx-color-primary-soft: #ffb090;
+  --wx-color-yanqing: #4ab8a8;
+  --wx-color-amber: #d9a020;
+  --wx-color-vermilion: #e8554a;
+  --wx-color-zixia: #9c7ce8;
+  --wx-color-jade: #3fa870;
+
+  --wx-state-unknown: #b0aab8;
+  --wx-state-light: #d9a020;
+  --wx-state-deep: #3fa870;
+}
+
+/* ==== 桌面风组件通用工具类（学习向导 / 计划管理复用） ==== */
+.wx-glass {
+  background: var(--wx-glass-bg);
+  backdrop-filter: blur(var(--wx-glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--wx-glass-blur)) saturate(160%);
+  border: 1px solid var(--wx-glass-border);
+  box-shadow: var(--wx-shadow-md);
+  border-radius: var(--wx-glass-radius);
+}
+
+.wx-glass-strong {
+  background: var(--wx-glass-bg-strong);
+  backdrop-filter: blur(calc(var(--wx-glass-blur) + 4px)) saturate(180%);
+  -webkit-backdrop-filter: blur(calc(var(--wx-glass-blur) + 4px)) saturate(180%);
+  border: 1px solid var(--wx-glass-border);
+  box-shadow: var(--wx-shadow-lg);
+  border-radius: var(--wx-glass-radius);
+}
+
+.wx-btn-gradient {
+  background: var(--wx-gradient-primary);
+  color: var(--wx-text-on-accent);
+  border: none;
+  border-radius: var(--wx-radius-pill);
+  padding: 10px 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--wx-color-primary) 35%, transparent);
+  transition:
+    transform var(--wx-duration-fast) var(--wx-ease-spring),
+    filter var(--wx-duration-fast) var(--wx-ease-out-soft);
+}
+.wx-btn-gradient:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+.wx-btn-gradient:disabled {
+  opacity: 0.45;
+  filter: none;
+}
+
+.wx-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+.wx-dot-unknown { background: var(--wx-state-unknown); color: var(--wx-state-unknown); }
+.wx-dot-light { background: var(--wx-state-light); color: var(--wx-state-light); }
+.wx-dot-deep { background: var(--wx-state-deep); color: var(--wx-state-deep); }
+
+.wx-pressable {
+  transition:
+    transform var(--wx-duration-fast) var(--wx-ease-spring),
+    filter var(--wx-duration-fast) var(--wx-ease-out-soft);
+}
+.wx-pressable:active {
+  transform: scale(0.97);
+  filter: brightness(0.95);
+}
+
+@keyframes wx-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+.wx-breathe { animation: wx-breathe 3.2s var(--wx-ease-in-out-soft) infinite; }
+
+@keyframes wx-spin { to { transform: rotate(360deg); } }
+.wx-spin { animation: wx-spin 1s linear infinite; }

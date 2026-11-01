@@ -1,0 +1,269 @@
+{
+  "plan_id": "iot_30d_demo",
+  "goal_project": {
+    "id": "proj_iot_temp_humidity",
+    "name": "ESP32 温湿度监测看板",
+    "deliverable": "一块 ESP32 把温湿度数据经 MQTT 上云，并在看板上实时显示与告警",
+    "stack": ["ESP32", "DHT22", "MQTT", "Node-RED", "Grafana"],
+    "estimated_hours": 12,
+    "warning": "按你每天 20–45 分钟、30 天的预算约 10–22.5 小时，本方案取最小范围：单设备、单指标、单向上云。"
+  },
+  "time_budget": {
+    "daily_min": 20,
+    "daily_max": 45,
+    "days_per_week": 6,
+    "total_days": 30,
+    "note": "30 天 × 6 天/周 × 约 32 分钟 ≈ 96 小时；本计划关键路径只用 12 小时，留足缓冲。"
+  },
+  "agent": {
+    "decision": "已按你「30 天交付一个可运行 IoT 项目」的目标，把范围收敛为 6 个阶段、18 个可执行任务。",
+    "rationale": "你的时间预算是每天 20–45 分钟，30 天有效投入约 10–22 小时。这个容量不足以覆盖物联网全学科，因此只保留交付必需的关键路径：感知端 → 通信 → 上云 → 看板；电路原理、调制理论等作为可选扩展，不进主线。",
+    "next_action": "今天只做第 1 步：安装工具链并点亮板载 LED，验证环境可用（约 25 分钟）。",
+    "steps": [
+      { "key": "requirement", "label": "已确认你的学习目标与约束", "state": "done" },
+      { "key": "resource",    "label": "正在匹配已审核的学习资源", "state": "done" },
+      { "key": "planning",    "label": "正在按你的时间预算排期", "state": "done" },
+      { "key": "visual",      "label": "正在生成可视化进度", "state": "running" },
+      { "key": "followup",    "label": "正在安排复习与跟进节奏", "state": "pending" },
+      { "key": "validate",    "label": "已检查资源是否齐备、时长是否装得下、依赖是否成环", "state": "pending" }
+    ]
+  },
+  "stages": [
+    {
+      "id": "s0",
+      "name": "阶段 0 · 环境",
+      "milestone": "工具链可用，板载 LED 能点亮",
+      "tasks": [
+        {
+          "id": "iot_000",
+          "title": "安装 Arduino IDE 与 ESP32 支持包，点亮板载 LED",
+          "est_minutes": 25,
+          "scaffold_level": 3,
+          "is_critical_path": true,
+          "onboarding_note": "这是整个项目的第 1 步，做完你就确认了工具链可用。",
+          "steps": [
+            "安装 Arduino IDE 2.x（官网下载，一路默认）",
+            "首选项 → 附加开发板管理器网址填入 ESP32 官方地址",
+            "开发板管理器搜索 esp32 并安装",
+            "选择开发板 ESP32 Dev Module，选对串口号",
+            "打开示例 Blink，上传，观察板载 LED 闪烁"
+          ],
+          "resources": [
+            { "type": "文档", "title": "ESP32 官方入门指南", "url": "https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html", "duration_min": 10 },
+            { "type": "视频", "title": "ESP32 环境搭建实操（前 8 分钟）", "duration_min": 8, "anchor": "00:00–08:00 安装部分" }
+          ],
+          "deliverable": "一张板载 LED 成功闪烁的照片或 10 秒录屏",
+          "acceptance": [
+            { "text": "Arduino IDE 能识别到串口号", "done": false },
+            { "text": "上传过程无报错，提示 Hard resetting via RTS pin", "done": false },
+            { "text": "板载 LED 以 1 秒为周期稳定闪烁", "done": false }
+          ],
+          "common_errors": [
+            { "error": "串口号显示为灰色或找不到", "diagnose": "多数是未安装 USB 转串口驱动（CH340/CP210x），装驱动后重插" },
+            { "error": "上传时报错 Failed to connect", "diagnose": "按住 BOOT 键再点上传，出现 Connecting 后松开" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s1",
+      "name": "阶段 1 · 感知端",
+      "milestone": "串口稳定输出温湿度读数",
+      "tasks": [
+        {
+          "id": "iot_001",
+          "title": "用 ESP32 读取 DHT22 温湿度并串口打印",
+          "est_minutes": 35,
+          "scaffold_level": 3,
+          "is_critical_path": true,
+          "onboarding_note": "完成后你就有了真实数据来源，这是整个链路的起点。",
+          "steps": [
+            "按接线图把 DHT22 的 VCC 接 3.3V、DATA 接 GPIO4、GND 接 GND",
+            "在 DATA 与 VCC 之间接一个 10kΩ 上拉电阻",
+            "Arduino IDE 库管理器安装 DHT sensor library 与 Adafruit Unified Sensor",
+            "打开示例代码 DHT_Unified_Sensor，把引脚号改为 4",
+            "编译上传，打开串口监视器，波特率设为 115200"
+          ],
+          "resources": [
+            { "type": "接线图", "title": "DHT22 与 ESP32 接线图（含上拉电阻）", "duration_min": 3 },
+            { "type": "代码模板", "title": "DHT_Unified_Sensor 示例（已改好引脚）" }
+          ],
+          "deliverable": "串口每隔 2 秒稳定输出温度和湿度数值的截图",
+          "acceptance": [
+            { "text": "连续运行 5 分钟无 NaN 或超时报错", "done": false },
+            { "text": "对传感器哈气后湿度读数明显上升", "done": false },
+            { "text": "能说出 DHT22 与 ESP32 之间用哪根线传数据", "done": false }
+          ],
+          "common_errors": [
+            { "error": "串口只显示 Failed to read from DHT sensor", "diagnose": "90% 是数据脚接错或上拉电阻漏接，检查 GPIO4 与 10kΩ" },
+            { "error": "读数一直是 NaN", "diagnose": "供电不足，换 3.3V 稳定电源，或在 VCC/GND 间加 100µF 电容" }
+          ]
+        },
+        {
+          "id": "iot_002",
+          "title": "把读数打包成 JSON 并定义主题名",
+          "est_minutes": 25,
+          "scaffold_level": 2,
+          "is_critical_path": true,
+          "onboarding_note": "上云之前先把数据格式定好，后面所有环节都依赖它。",
+          "steps": [
+            "定义 JSON 字段：device_id、temp、humidity、ts",
+            "用 ArduinoJson 库拼装字符串（容量给 200 字节）",
+            "设计主题名：home/livingroom/sensor01/telemetry",
+            "串口打印拼好的 JSON，确认格式正确"
+          ],
+          "resources": [
+            { "type": "代码模板", "title": "ArduinoJson 拼装示例（含字段注释）" },
+            { "type": "文档", "title": "MQTT 主题命名最佳实践", "duration_min": 6 }
+          ],
+          "deliverable": "串口输出的一行合法 JSON，可被在线 JSON 校验器通过",
+          "acceptance": [
+            { "text": "JSON 能被任意在线校验器判定为合法", "done": false },
+            { "text": "主题名包含设备位置与数据类型两层以上结构", "done": false },
+            { "text": "能解释为什么要在 payload 里带时间戳", "done": false }
+          ],
+          "common_errors": [
+            { "error": "拼出来的 JSON 缺字段或被截断", "diagnose": "ArduinoJson 的 StaticJsonDocument 容量给小了，加到 256 试试" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "name": "阶段 2 · 通信",
+      "milestone": "数据能通过 MQTT 发出去并被订阅端收到",
+      "tasks": [
+        {
+          "id": "iot_003",
+          "title": "连接本地 MQTT Broker 并发布温湿度数据",
+          "est_minutes": 40,
+          "scaffold_level": 2,
+          "is_critical_path": true,
+          "onboarding_note": "这一步打通后，你的数据就离开了开发板。",
+          "steps": [
+            "本机安装 Mosquitto 并用 mosquitto -v 启动（或装 MQTTX 用公共 broker）",
+            "Arduino IDE 安装 PubSubClient 库",
+            "填入 Wi-Fi 名称密码与 broker 地址端口 1883",
+            "在 setup 里连 Wi-Fi，loop 里每 5 秒发布一次 JSON",
+            "用 MQTTX 订阅同一主题，确认能收到消息"
+          ],
+          "resources": [
+            { "type": "文档", "title": "PubSubClient API 说明", "url": "https://pubsubclient.knolleary.net/", "duration_min": 8 },
+            { "type": "代码模板", "title": "Wi-Fi + MQTT 发布完整示例（填空版）" }
+          ],
+          "deliverable": "MQTTX 界面显示收到的消息列表截图",
+          "acceptance": [
+            { "text": "MQTTX 能持续收到消息，间隔与代码设定一致", "done": false },
+            { "text": "断开 Wi-Fi 后代码能自动重连（不会死机）", "done": false },
+            { "text": "能说出 QoS 0 与 QoS 1 的区别", "done": false }
+          ],
+          "common_errors": [
+            { "error": "MQTT 连接返回 -2（连接失败）", "diagnose": "broker 地址填错或防火墙挡了 1883，先用手机热点排除路由器隔离" },
+            { "error": "连上一会儿就断", "diagnose": "loop 里没有调用 client.loop()，或没有做重连逻辑" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "name": "阶段 3 · 上云与看板",
+      "milestone": "数据在云端可查，看板能显示实时曲线",
+      "tasks": [
+        {
+          "id": "iot_004",
+          "title": "Node-RED 订阅主题并写入 InfluxDB",
+          "est_minutes": 40,
+          "scaffold_level": 1,
+          "is_critical_path": true,
+          "onboarding_note": "这一步把数据变成可查询的历史记录。",
+          "steps": [
+            "安装 Node-RED，浏览器打开 1880 端口",
+            "拖入 mqtt in 节点，填 broker 与主题",
+            "拖入 function 节点把 JSON 转成 InfluxDB 的字段格式",
+            "拖入 influxdb out 节点写入，部署",
+            "在 InfluxDB UI 里查询，确认有时间序列数据"
+          ],
+          "resources": [
+            { "type": "文档", "title": "Node-RED 官方食谱", "url": "https://cookbook.nodered.org/", "duration_min": 10 },
+            { "type": "代码模板", "title": "payload 转 InfluxDB 字段的 function 代码" }
+          ],
+          "deliverable": "InfluxDB 查询结果截图，显示至少 10 条带时间戳的记录",
+          "acceptance": [
+            { "text": "数据库里能看到连续的时间序列，无断点", "done": false },
+            { "text": "设备离线期间不会产生脏数据", "done": false },
+            { "text": "能说明数据从设备到数据库经过了哪几个节点", "done": false }
+          ],
+          "common_errors": [
+            { "error": "InfluxDB 报 field type conflict", "diagnose": "同一字段一会儿是字符串一会儿是数字，在 function 里统一转成 float" }
+          ]
+        },
+        {
+          "id": "iot_005",
+          "title": "Grafana 出温湿度看板并设置阈值告警",
+          "est_minutes": 45,
+          "scaffold_level": 1,
+          "is_critical_path": true,
+          "onboarding_note": "最后一步，让数据变得可读、可响应。",
+          "steps": [
+            "安装 Grafana，添加 InfluxDB 数据源",
+            "新建面板，写查询语句显示温度曲线",
+            "再加一个湿度面板与一个设备在线状态灯",
+            "给温度设置阈值告警（如 > 30℃）",
+            "把看板保存并导出 JSON 备份"
+          ],
+          "resources": [
+            { "type": "文档", "title": "Grafana 入门：第一个面板", "url": "https://grafana.com/docs/grafana/latest/getting-started/", "duration_min": 12 }
+          ],
+          "deliverable": "看板截图（含实时曲线 + 在线状态灯）+ 导出的 JSON",
+          "acceptance": [
+            { "text": "曲线能实时刷新，延迟不超过 10 秒", "done": false },
+            { "text": "设备断电后状态灯在 1 分钟内变红", "done": false },
+            { "text": "温度超阈值时告警规则被触发一次", "done": false },
+            { "text": "能向别人解释整条链路：传感器 → MCU → MQTT → 数据库 → 看板", "done": false }
+          ],
+          "common_errors": [
+            { "error": "面板显示 No data", "diagnose": "先查数据源是否连通，再查时间范围是否覆盖了数据产生的时间" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s4",
+      "name": "阶段 4 · 打磨与验收",
+      "milestone": "可复现、可演示、可解释",
+      "tasks": [
+        {
+          "id": "iot_006",
+          "title": "补上断电重连、写 README 并录 3 分钟演示",
+          "est_minutes": 40,
+          "scaffold_level": 0,
+          "is_critical_path": true,
+          "onboarding_note": "这一步决定你的项目是「能跑」还是「能交付」。",
+          "steps": [
+            "在代码里补 Wi-Fi 与 MQTT 断线重连逻辑",
+            "实测：拔掉网线 30 秒再插回，看数据能否恢复",
+            "写 README：硬件清单、接线图、部署步骤、已知问题",
+            "录一段 3 分钟演示：从串口读数到看板刷新"
+          ],
+          "resources": [
+            { "type": "代码模板", "title": "断线重连标准写法" }
+          ],
+          "deliverable": "README.md + 3 分钟演示视频 + 重连测试记录",
+          "acceptance": [
+            { "text": "断网 30 秒后能自动恢复上报，无需人工重启", "done": false },
+            { "text": "他人按 README 能独立复现出同样结果", "done": false },
+            { "text": "演示视频里能清楚看到数据从设备流到看板", "done": false }
+          ],
+          "common_errors": [
+            { "error": "重连后数据出现长时间空档", "diagnose": "没做本地缓存补传，先把问题写进 README 的「已知问题」即可" }
+          ]
+        }
+      ]
+    }
+  ],
+  "optional_extensions": [
+    { "id": "ext_01", "title": "加第二个传感器（光照）", "note": "非关键路径，时间富余时再做" },
+    { "id": "ext_02", "title": "把 MQTT 换成阿里云 IoT 平台三元组认证", "note": "需要云账号，非关键路径" },
+    { "id": "ext_03", "title": "深入学习采样定理与信号调理", "note": "学科知识，与交付目标无直接关系，建议延后" }
+  ]
+}

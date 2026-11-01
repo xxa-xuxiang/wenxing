@@ -1,0 +1,40 @@
+[Unit]
+Description=Wenxing API (Node.js + Express + SQLite)
+After=network.target
+# SQLite 单文件：禁止配置多实例/多副本，否则并发写会锁库
+
+[Service]
+Type=simple
+User=wenxing
+Group=wenxing
+WorkingDirectory=/opt/wenxing/backend-cloud/server
+
+# 生产固定值；同名变量在 .env 中存在时，进程环境优先
+Environment=NODE_ENV=production
+# 只监听本机，由 Nginx 反向代理对外
+Environment=HOST=127.0.0.1
+Environment=PORT=3001
+# 统一时区，保证 AI 每日额度按北京时间重置、日志时间可读
+Environment=TZ=Asia/Shanghai
+
+# Node 22（bootstrap.sh 通过 NodeSource 安装）
+ExecStart=/usr/bin/node --env-file=.env index.js
+
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+
+LimitNOFILE=65535
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wenxing-api
+
+# 基础加固：代码只读，只有数据目录可写
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/wenxing/backend-cloud/data
+
+[Install]
+WantedBy=multi-user.target

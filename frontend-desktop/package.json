@@ -1,0 +1,44 @@
+{
+  "name": "wenxing-web",
+  "version": "1.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "dev:desktop": "tauri dev",
+    "dev:debug": "node scripts/dev-debug.mjs",
+    "build:desktop": "tauri build",
+    "build:desktop:signed": "node scripts/check-signing.mjs && tauri build --config src-tauri/tauri.signing.conf.json",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "gen:skills": "node scripts/gen-skills-atlas.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-shell": "^2.5.0",
+    "pinia": "^2.2.4",
+    "three": "^0.169.0",
+    "vue": "^3.5.12",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.2",
+    "@types/node": "^26.6.5",
+    "@types/three": "^0.169.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "terser": "^5.51.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vue-tsc": "^2.1.6"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true,
+    "vue-demi@0.14.10": true
+  }
+}

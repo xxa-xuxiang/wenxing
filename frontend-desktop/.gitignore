@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+e2e/test-results
+e2e/report
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json

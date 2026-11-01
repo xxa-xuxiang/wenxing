@@ -1,0 +1,5 @@
+target/
+staging/
+node-portable.exe
+icon-source.jpg
+gen/

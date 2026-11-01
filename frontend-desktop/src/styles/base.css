@@ -1,0 +1,186 @@
+/* 问星 v0.1 — 基础样式与深空背景层 */
+
+/* ===== 可过渡渐变子令牌（注册后才能对 custom property 做插值过渡） ===== */
+@property --wx-aurora-l1 { syntax: '<color>'; inherits: true; initial-value: #000510; }
+@property --wx-aurora-l2 { syntax: '<color>'; inherits: true; initial-value: #030018; }
+@property --wx-aurora-l3 { syntax: '<color>'; inherits: true; initial-value: #000000; }
+@property --wx-aurora-r1 { syntax: '<color>'; inherits: true; initial-value: rgba(0, 229, 255, 0.10); }
+@property --wx-aurora-r2 { syntax: '<color>'; inherits: true; initial-value: rgba(124, 77, 255, 0.12); }
+@property --wx-aurora-r3 { syntax: '<color>'; inherits: true; initial-value: rgba(45, 212, 191, 0.08); }
+@property --wx-aurora-r4 { syntax: '<color>'; inherits: true; initial-value: rgba(100, 220, 255, 0.06); }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--wx-font-sans);
+  color: var(--wx-text-primary);
+  background: var(--wx-bg-deep);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+/* 深空背景层：极光渐变 + 星辰 */
+.wx-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--wx-gradient-aurora);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wx-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 18% 22%, var(--wx-aurora-r1) 0%, transparent 38%),
+    radial-gradient(circle at 82% 18%, var(--wx-aurora-r2) 0%, transparent 42%),
+    radial-gradient(circle at 50% 88%, var(--wx-aurora-r3) 0%, transparent 50%),
+    radial-gradient(circle at 75% 70%, var(--wx-aurora-r4) 0%, transparent 40%);
+  filter: blur(20px);
+  animation: wx-aurora-drift 24s var(--wx-ease-in-out-soft) infinite alternate;
+}
+
+.wx-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, #ffffff 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 62%, #d8e0ff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 47% 12%, #ffffff 50%, transparent 51%),
+    radial-gradient(1px 1px at 63% 78%, #ffe4b8 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 78% 32%, #ffffff 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 65%, #c0d0ff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 36% 88%, #ffffff 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 75%, #d8e0ff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 92% 88%, #ffffff 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 45%, #ffffff 50%, transparent 51%);
+  background-size: 100% 100%;
+  opacity: 0.85;
+  animation: wx-twinkle 6s var(--wx-ease-in-out-soft) infinite alternate;
+}
+
+@keyframes wx-aurora-drift {
+  0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+  100% { transform: translate3d(3%, 2%, 0) scale(1.05); }
+}
+
+@keyframes wx-twinkle {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.95; }
+}
+
+/* 曙光白：星空光点改为墨色细点，避免浅底上看不见/发脏 */
+html[data-theme="dawn"] .wx-backdrop::after {
+  opacity: 0.35;
+  filter: invert(1);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+
+ul, ol { list-style: none; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--wx-color-primary) 25%, transparent); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--wx-color-primary) 45%, transparent); }
+
+/* 层级令牌：variables.css 未定义，在此补齐缺失层级（仅新增，不覆盖既有值） */
+:root {
+  --wx-z-menu: 60;
+  --wx-z-drawer: 80;
+  --wx-z-overlay: 90;
+  --wx-z-orb: 100;
+}
+
+/* ===== 键盘焦点可见性（全局兜底） =====
+   让所有可交互元素的键盘焦点清晰可见；鼠标点击不触发（:focus-visible 语义）。
+   现代浏览器 outline 会跟随元素自身圆角，故不额外设置 border-radius，避免改形。 */
+:where(button, a, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--wx-color-primary-soft);
+  outline-offset: 2px;
+}
+
+/* 输入类控件已有 :focus 边框样式，焦点态不再叠加难看的双环 */
+:where(input, textarea, select):focus-visible {
+  outline: none;
+}
+
+/* ===== 无边框窗口拖动区域 ===== */
+.wx-app-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.wx-app-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* ===== 主题切换渐变过渡 =====
+   首屏无过渡：themeStore 首帧后才给 <html> 加 .wx-theme-ready，故仅用户主动切换时触发。
+   全程 :where() 保持 0 优先级 —— 组件自带的 hover/入场 transition 一律不受影响；
+   时长/缓动统一引用令牌（280ms / ease-out-soft，reduced-motion 时令牌自动归零）。 */
+:where(html.wx-theme-ready) {
+  transition:
+    --wx-aurora-l1 var(--wx-duration-mid) var(--wx-ease-out-soft),
+    --wx-aurora-l2 var(--wx-duration-mid) var(--wx-ease-out-soft),
+    --wx-aurora-l3 var(--wx-duration-mid) var(--wx-ease-out-soft),
+    --wx-aurora-r1 var(--wx-duration-mid) var(--wx-ease-out-soft),
+    --wx-aurora-r2 var(--wx-duration-mid) var(--wx-ease-out-soft),
+    --wx-aurora-r3 var(--wx-duration-mid) var(--wx-ease-out-soft),
+    --wx-aurora-r4 var(--wx-duration-mid) var(--wx-ease-out-soft);
+}
+:where(html.wx-theme-ready body, html.wx-theme-ready body *, html.wx-theme-ready body *::before, html.wx-theme-ready body *::after) {
+  transition-property: background-color, border-color, color, outline-color, box-shadow, fill, stroke;
+  transition-duration: var(--wx-duration-mid);
+  transition-timing-function: var(--wx-ease-out-soft);
+}
+
+/* ===== 桌宠窗口全局透明 ===== */
+/* overflow 必须是 hidden：窗口只有球那么大，visible 会让页面出现滚动条，
+   在透明桌宠窗口里会露出一条竖直的深色滚动条挡住球的右缘 */
+html.wx-pet-window,
+html.wx-pet-window body,
+html.wx-pet-window #app {
+  background: transparent !important;
+  overflow: hidden;
+}
+html.wx-pet-window ::-webkit-scrollbar {
+  display: none;
+}
+html.wx-pet-window .wx-backdrop {
+  display: none;
+}

@@ -1,0 +1,30 @@
+[package]
+name = "wenxing"
+version = "1.1.0"
+description = "问星 · AI 学习伴侣 桌面端"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-shell = "2"
+arboard = "3"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = ["Win32_UI_Input_KeyboardAndMouse"] }
+
+[features]
+# 生产构建必须启用（嵌入前端产物、禁用 devUrl）：
+#   cargo build --release --features custom-protocol
+# 缺失该 feature 时 release exe 仍指向 devUrl(5173)，运行即白屏
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

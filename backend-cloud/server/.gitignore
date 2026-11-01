@@ -1,0 +1,7 @@
+node_modules
+.env
+
+# 题库管线运行时数据（抓取的公开网页文本可能有版权，不随仓库分发）
+data/corpus/
+# worker 运行日志
+*.log

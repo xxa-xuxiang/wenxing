@@ -1,0 +1,33 @@
+/* 问星移动端 H5 — 全局基础样式 */
+/* 375 基准视口；Vant 组件负责大部分 UI，这里只做 reset 与全局约定 */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #f7f8fa;
+  color: #323233;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* 有 TabBar 的主页面：底部预留导航高度，避免内容被遮挡 */
+.page-with-tabbar {
+  padding-bottom: calc(50px + env(safe-area-inset-bottom));
+}
+
+/* 二级页内容区通用留白 */
+.page-pad {
+  padding: 12px;
+}

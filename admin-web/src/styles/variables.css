@@ -1,0 +1,167 @@
+/* 问星 v0.1 — 设计令牌（极夜黑 / 曙光白两套主题） */
+:root {
+  /* 主色 */
+  --wx-color-primary: #818cf8;       /* 星靛 */
+  --wx-color-primary-strong: #6366f1;
+  --wx-color-primary-soft: #a5b4fc;
+
+  /* 辅助色 */
+  --wx-color-yanqing: #2dd4bf;       /* 砚青 */
+  --wx-color-amber: #fbbf24;         /* 琥珀 */
+  --wx-color-vermilion: #f87171;     /* 朱砂 */
+  --wx-color-zixia: #c084fc;         /* 紫霞 */
+
+  /* 学习状态三态（判定规则：未学=灰；读完文档=黄灯轻掌握；做对10道相关题=绿灯深度掌握） */
+  --wx-state-unknown: #6b7280;       /* 未学 — 灰 */
+  --wx-state-light: #fbbf24;         /* 轻掌握（已读文档）— 黄灯 */
+  --wx-state-deep: #4ade80;          /* 深度掌握（做对10题）— 绿灯 */
+
+  /* 中性色（默认 = 极夜黑） */
+  --wx-bg-deep: #000000;
+  --wx-bg-deep-2: #0a0a0f;
+  --wx-bg-mid: #12121a;
+  /* 文字色与背景联动计算（不硬编码）：深/浅墨色按 --wx-bg-deep 在 oklab 空间混合推导。
+     浅色主题由 light-dark() 自动切换墨色（需各主题声明 color-scheme）。
+     对比度：primary/secondary ≥ 4.5:1（正文），tertiary/muted ≥ 3:1（次要/占位）。 */
+  color-scheme: dark;
+  --wx-ink: light-dark(#171221, #f7f8ff);
+  --wx-text-primary: color-mix(in oklab, var(--wx-ink) 94%, var(--wx-bg-deep));
+  --wx-text-secondary: color-mix(in oklab, var(--wx-ink) 78%, var(--wx-bg-deep));
+  --wx-text-tertiary: color-mix(in oklab, var(--wx-ink) 62%, var(--wx-bg-deep));
+  --wx-text-muted: color-mix(in oklab, var(--wx-ink) 50%, var(--wx-bg-deep));
+  /* accent/渐变/高亮表面上的文字：浅色主题用深棕保证 ≥4.5:1，深色主题用白 */
+  --wx-text-on-accent: light-dark(#2f1808, #ffffff);
+  --wx-border-soft: rgba(255, 255, 255, 0.06);
+  --wx-border-glow: rgba(100, 220, 255, 0.35);
+
+  /* 玻璃层 */
+  --wx-glass-bg: rgba(10, 10, 20, 0.55);
+  --wx-glass-bg-strong: rgba(10, 10, 20, 0.75);
+  --wx-glass-border: rgba(120, 180, 255, 0.15);
+  --wx-glass-blur: 22px;
+  --wx-glass-radius: 18px;
+  --wx-glass-radius-sm: 12px;
+
+  /* 渐变（aurora 拆为可过渡子令牌：@property 注册于 base.css，主题切换时 280ms 插值） */
+  --wx-aurora-l1: #000510;
+  --wx-aurora-l2: #030018;
+  --wx-aurora-l3: #000000;
+  --wx-aurora-r1: rgba(0, 229, 255, 0.10);
+  --wx-aurora-r2: rgba(124, 77, 255, 0.12);
+  --wx-aurora-r3: rgba(45, 212, 191, 0.08);
+  --wx-aurora-r4: rgba(100, 220, 255, 0.06);
+  --wx-gradient-aurora: linear-gradient(135deg, var(--wx-aurora-l1) 0%, var(--wx-aurora-l2) 50%, var(--wx-aurora-l3) 100%);
+  --wx-gradient-primary: linear-gradient(135deg, #00e5ff 0%, #7c4dff 100%);
+  --wx-gradient-amber: linear-gradient(135deg, #fbbf24 0%, #f87171 100%);
+  --wx-gradient-yan: linear-gradient(135deg, #2dd4bf 0%, #818cf8 100%);
+
+  /* 阴影 */
+  --wx-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --wx-shadow-md: 0 10px 32px rgba(0, 0, 0, 0.75);
+  --wx-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.85);
+  --wx-shadow-glow: 0 0 32px rgba(0, 229, 255, 0.3);
+
+  /* 间距 */
+  --wx-space-xs: 4px;
+  --wx-space-sm: 8px;
+  --wx-space-md: 16px;
+  --wx-space-lg: 24px;
+  --wx-space-xl: 32px;
+  --wx-space-2xl: 48px;
+
+  /* 字体 */
+  --wx-font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --wx-font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
+  --wx-font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+
+  /* 动效曲线 */
+  --wx-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --wx-ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --wx-ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --wx-duration-fast: 160ms;
+  --wx-duration-mid: 280ms;
+  --wx-duration-slow: 480ms;
+
+  /* 圆角 */
+  --wx-radius-sm: 8px;
+  --wx-radius-md: 12px;
+  --wx-radius-lg: 18px;
+  --wx-radius-pill: 999px;
+
+  /* ===== 自绘窗口 & 桌宠令牌 ===== */
+  --wx-titlebar-height: 36px;
+  --wx-pet-size: 60px;
+  --wx-pet-capsule-height: 36px;
+  --wx-pet-panel-width: 380px;
+  --wx-pet-panel-height: 520px;
+
+  /* ===== 制定计划区域全局标准尺寸（响应式 + 统一最小值；所有出现处必须引用） ===== */
+  --wx-wizard-w: min(1040px, calc(100vw - 64px));
+  --wx-wizard-h: min(880px, calc(100vh - 72px));
+  --wx-wizard-min-w: 720px;
+  --wx-wizard-min-h: 520px;
+
+  /* ===== 主题标识 ===== */
+  --wx-theme-accent: #00e5ff;  /* 极夜黑主色 */
+}
+
+/* 尊重 prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --wx-ease-spring: linear;
+    --wx-ease-out-soft: linear;
+    --wx-ease-in-out-soft: linear;
+    --wx-duration-fast: 0ms;
+    --wx-duration-mid: 0ms;
+    --wx-duration-slow: 0ms;
+  }
+}
+
+/* =======================================================
+   主题系统（两套：极夜黑 = 默认 | 曙光白）
+   默认令牌在 :root 已定义，对应 data-theme="midnight"
+   切换时由 themeStore 在 <html> 上写 data-theme 属性
+   ======================================================= */
+
+/* ---- 主题 2：曙光白（浅色底 + 日间模式） ---- */
+[data-theme="dawn"] {
+  color-scheme: light;
+  --wx-bg-deep: #faf8f5;
+  --wx-bg-deep-2: #f0ede6;
+  --wx-bg-mid: #e8e4da;
+  /* 文字色继承 :root 的 color-mix 联动令牌（color-scheme: light → 深墨色） */
+  --wx-border-soft: rgba(0, 0, 0, 0.08);
+  --wx-border-glow: rgba(255, 140, 60, 0.4);
+
+  --wx-glass-bg: rgba(255, 255, 255, 0.65);
+  --wx-glass-bg-strong: rgba(255, 255, 255, 0.85);
+  --wx-glass-border: rgba(0, 0, 0, 0.1);
+
+  --wx-aurora-l1: #fff5e8;
+  --wx-aurora-l2: #ffe8f0;
+  --wx-aurora-l3: #f0f4ff;
+  --wx-aurora-r1: rgba(255, 138, 92, 0.20);
+  --wx-aurora-r2: rgba(255, 92, 138, 0.14);
+  --wx-aurora-r3: rgba(74, 184, 168, 0.14);
+  --wx-aurora-r4: rgba(217, 160, 32, 0.10);
+  --wx-gradient-primary: linear-gradient(135deg, #ff8a5c 0%, #ff5c8a 100%);
+
+  --wx-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --wx-shadow-md: 0 10px 32px rgba(0, 0, 0, 0.12);
+  --wx-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --wx-shadow-glow: 0 0 32px rgba(255, 140, 60, 0.25);
+
+  --wx-color-primary: #ff8a5c;
+  --wx-color-primary-strong: #ff6a3c;
+  --wx-color-primary-soft: #ffb090;
+  --wx-color-yanqing: #4ab8a8;
+  --wx-color-amber: #d9a020;
+  --wx-color-vermilion: #e8554a;
+  --wx-color-zixia: #9c7ce8;
+
+  --wx-state-unknown: #b0aab8;
+  --wx-state-light: #d9a020;
+  --wx-state-deep: #3fa870;
+
+  --wx-theme-accent: #ff8a5c;
+}

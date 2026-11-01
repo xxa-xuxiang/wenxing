@@ -1,0 +1,41 @@
+{
+  "name": "wenxing-phone",
+  "version": "1.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "cap:sync": "npm run build && npx cap sync android",
+    "build:android": "node scripts/sync-android-version.mjs && cross-env VITE_API_BASE=http://YOUR_SERVER_IP npm run build && npx cap sync android && cd android && gradlew.bat assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "pinia": "^2.2.4",
+    "three": "^0.169.0",
+    "vant": "^4.9.8",
+    "vue": "^3.5.12",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@types/node": "^26.6.5",
+    "@types/three": "^0.169.0",
+    "@vant/auto-import-resolver": "^1.2.1",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "cross-env": "^10.1.0",
+    "terser": "^5.51.2",
+    "typescript": "^5.6.3",
+    "unplugin-vue-components": "^0.27.4",
+    "vconsole": "^3.15.1",
+    "vite": "^5.4.10",
+    "vue-tsc": "^2.1.6"
+  }
+}

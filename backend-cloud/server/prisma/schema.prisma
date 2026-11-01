@@ -1,0 +1,664 @@
+// 问星 v0.6 — 数据库设计（SQLite + Prisma）
+// 设计原则：
+//   1) 高频结构化数据（答题/掌握度记录）规范化入库——可做按知识点/时间维度的查询与统计
+//   2) 低频配置态数据（学习合同/大纲/文档快照）以 JSON 快照整存——结构随版本演进免迁移
+//   3) 所有业务数据挂 userId，天然多用户隔离；localStorage 仅作为前端缓存
+// 预留表（后续版本实现）：QuizSession/QuizAnswer（题库做题明细）、FeedbackUser（用户反馈）、
+//   Subscription（会员订阅，对接支付时启用）、AuthThird（第三方/扫码登录凭据，APP 端启用）
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表：账号密码登录（v0.6），APP 端扫码登录后续经 AuthThird 扩展
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique // 登录名（3-24 位字母数字下划线）
+  passwordHash String // bcrypt 哈希，永不出库
+  nickname     String // 昵称（默认取用户名）
+  profile      String? // 学习档案 JSON（{identity, stage, school, major}）；NULL = 首次进入未完善
+  disabled     Boolean  @default(false) // 管理后台禁用后禁止登录与鉴权
+  inviteCode   String?  @unique // 专属邀请码（8 位大写字母数字；存量用户启动时惰性回填）
+  invitedById  String? // 邀请人用户 id（注册时填写对方邀请码）
+  balanceFen   Int      @default(0) // 账户余额（分）：兑换码/后台手动充值入账，AI 免费额度用尽后按次扣费
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+
+  inviter  User?  @relation("InviteChain", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitees User[] @relation("InviteChain")
+
+  masteryRecords      MasteryRecord[]
+  learningState       LearningState?
+  docFavorites        DocFavorite[]
+  communityPosts      CommunityPost[]
+  communityComments   CommunityComment[]
+  communityLikes      CommunityLike[]
+  communityFavorites  CommunityFavorite[]
+  learningPlans       LearningPlan[]
+  planReports         PlanReport[]
+  papers              Paper[]
+  quizSessions        QuizSession[]
+  checkins            Checkin[]
+  weeklyReviews       WeeklyReview[]
+  usageEvents         UsageEvent[]
+  rechargeOrders      RechargeOrder[]
+  walletTxns          WalletTxn[]
+
+  @@index([invitedById])
+}
+
+// 掌握度答题记录：答题提交后逐知识点追加（只增不改）
+// 状态机在前端/服务端均可重放：未学→在学→已掌握（近10题≥80%且≥5题），<60% 滞回退回
+model MasteryRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  kp        String // 知识点原名（星图叶子能力项名）
+  ok        Boolean // 本次答题是否正确
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kp])
+  @@index([userId, createdAt])
+}
+
+// 学习工作台快照：学习合同/大纲任务/生成文档/选中任务等整包 JSON（低频写、读时全量取）
+model LearningState {
+  userId    String   @id
+  data      String // JSON 序列化的 learnStore 快照
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// 文档向量库：Markdown 按标题/段落切块，Embedding 以 JSON number[] 存储，余弦相似度在 Node 端计算
+model DocVector {
+  id         String   @id @default(cuid())
+  industry   String // 行业文件夹名
+  file       String // 文档文件名（含 .md）
+  title      String // 文档标题（frontmatter title 或文件名）
+  chunkIndex Int // 块序号
+  text       String // 切块原文
+  embedding  String // JSON number[]
+  dim        Int // 向量维度
+  model      String // 生成所用 embedding 模型名
+  updatedAt  DateTime @updatedAt
+
+  @@unique([industry, file, chunkIndex])
+  @@index([industry, file])
+}
+
+// 文档收藏：按用户隔离，userId+industry+file 唯一幂等
+model DocFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  industry  String
+  file      String
+  title     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, industry, file])
+}
+
+// 社区帖子：tags/images 以 JSON string[] 存储（images 为 /uploads/community/... 相对 URL）
+// industryId：内容分区边界，列表/详情/搜索均按当前行业隔离（缺省 general = 综合交流）
+// 审核流：发帖先过本地敏感词（命中直接拒），正常帖 approved 可见，AI 异步复审违规改 rejected
+model CommunityPost {
+  id          String   @id @default(cuid())
+  userId      String
+  industryId  String   @default("general") // 行业标签 id（由运营方配置，前端 communityIndustries 维护）
+  title       String
+  content     String
+  tags        String // JSON string[]（技能领域/学习阶段/兴趣标签）
+  images      String // JSON string[]
+  status      String   @default("approved") // approved 已发布 | rejected 已拦截/下架
+  auditReason String? // 拦截原因（敏感词命中词 / AI 复审理由 / 管理员备注）
+  auditBy     String? // ai | admin
+  auditedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  CommunityComment[]
+  likes     CommunityLike[]
+  favorites CommunityFavorite[]
+
+  @@index([industryId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+// 行为埋点：桌面端/网页端界面进入离开、点击、帖子浏览（轻量分析：PV/UV/点击率/停留时长/DAU）
+model UsageEvent {
+  id         String   @id @default(cuid())
+  userId     String? // 登录用户；未登录为 NULL
+  sessionId  String // 客户端匿名会话 id（DAU 兜底口径）
+  kind       String // view_enter | view_leave | click | post_view
+  screen     String // 界面标识：atlas/learn/questions/papers/quiz/community/me/feedback/auth
+  target     String? // 点击目标 / 帖子 id 等
+  durationMs Int? // view_leave 的停留毫秒
+  meta       String? // JSON 扩展字段
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([kind, screen, createdAt])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+// 管理员令牌吊销表：logout 时登记 jti，令牌到期后惰性清理（admin JWT 无状态的吊销兜底）
+model AdminRevokedToken {
+  jti       String   @id
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+// 社区评论
+model CommunityComment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+}
+
+// 社区点赞：postId+userId 唯一幂等
+model CommunityLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+// 社区收藏：postId+userId 唯一幂等
+model CommunityFavorite {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+// ===== 学习计划（自由目标路径：采集向导 → 计划文档 → 每日任务 → 周报） =====
+
+// 学习计划主表：采集结果与 AI 生成物均以 JSON 快照存储（结构随版本演进免迁移）
+model LearningPlan {
+  id            String   @id @default(cuid())
+  userId        String
+  goal          String // 用户原始输入「我要学习什么」
+  understanding String // AI 理解 JSON {summary, capabilities[], software[]}
+  skillType     String // immersive | theory | mimicry | logic | mixed
+  groupType     String // student | worker | mass
+  questionnaire String // 8 组问卷答案 JSON
+  decomposition String? // 能力拆解 JSON {dimensions[], tools[], risks[]}
+  outlineStages String? // 大纲阶段 JSON [{name,type,days,items[]}]
+  planDoc       String? // 完整学习计划文档 Markdown
+  catalog       String? // 知识目录 JSON 树 [{id,title,children[]}]
+  startDate     String? // YYYY-MM-DD（确认时设定）
+  status        String   @default("draft") // draft | active | archived
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks   PlanTask[]
+  reports PlanReport[]
+
+  @@index([userId, status])
+}
+
+// 计划每日任务：confirm 时按 outlineStages + 问卷节奏确定性排期生成
+model PlanTask {
+  id          String    @id @default(cuid())
+  planId      String
+  date        String // YYYY-MM-DD
+  stage       String // 所属流程阶段名（如「场景模拟」）
+  catalogId   String? // 关联知识目录节点 id
+  title       String
+  description String
+  resources   String // JSON [{type,title,ref}]
+  toolTip     String? // 工具使用指导（与阶段绑定）
+  riskTip     String? // 风险预警（该阶段常见失败点）
+  status      String    @default("pending") // pending | done
+  completedAt DateTime?
+
+  // 任务卡四字段（加性变更，全部可空，老数据不受影响）
+  estMinutes       Int? // 预计分钟数
+  scaffoldLevel    Int?     @default(3) // 3=完整样例 2=补全 1=提示 0=独立
+  isCriticalPath   Boolean? @default(false)
+  onboardingNote   String? // 一句话说明「这是你项目的第几步」
+  stepsJson        String? // JSON 数组字符串
+  resourcesJson    String? // JSON 数组字符串 [{type,title,url,duration_min,anchor}]
+  deliverable      String? // 产出物描述
+  acceptanceJson   String? // JSON 数组字符串 [{text,done}]
+  commonErrorsJson String? // JSON 数组字符串 [{error,diagnose}]
+  updatedAt        DateTime? @updatedAt
+
+  plan LearningPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, date])
+}
+
+// 学习周报：每周一份，planId+weekStart 唯一幂等
+model PlanReport {
+  id        String   @id @default(cuid())
+  planId    String
+  userId    String
+  weekStart String // 周一 YYYY-MM-DD
+  content   String // Markdown 周报
+  stats     String // JSON {total, done, overdue, rate}
+  createdAt DateTime @default(now())
+
+  plan LearningPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, weekStart])
+}
+
+// ============================================================
+// 题库后端化（v1.1）：叶子注册表 / 公开语料 / 题目 / 试卷 / 答题会话 / 填充任务
+// SQLite 不支持枚举，状态字段一律用 String；向量用 Bytes 存 Float32 BLOB
+// ============================================================
+
+// 技能小叶子注册表：由 20 个行业分类 md 确定性导入，是题目覆盖度统计与填充任务调度的基准
+model SkillLeaf {
+  id        String   @id @default(cuid())
+  leafKey   String   @unique // = sha1(industry/category/domain/stack/name)，跨次导入稳定
+  industry  String // 行业名（与 md 文件名映射一致，如「信息技术与软件」）
+  category  String // # 大类
+  domain    String // ## 领域
+  stack     String // ### 技术栈
+  name      String // 叶子能力项名
+  pathText  String // 完整路径「行业 / 大类 / 领域 / 技术栈 / 叶子」
+
+  questions Question[]
+  fillJob   FillJobItem?
+
+  @@index([industry])
+  @@index([industry, category])
+}
+
+// 公开语料文档（出题 grounding 的出处留痕）
+model SourceDoc {
+  id        String   @id @default(cuid())
+  url       String   @unique // 来源页 URL；本地导入为 file:// 相对路径
+  title     String
+  siteDomain String // 站点域名（白名单对账用）
+  industry  String   @default("") // 归属行业（本地导入按目录，抓取按检索归属）
+  license   String   @default("") // 已知许可（如 CC-BY-SA），未知为空
+  status    String   @default("active") // active | disabled
+  fetchedAt DateTime @default(now())
+
+  chunks SourceChunk[]
+
+  @@index([industry])
+  @@index([siteDomain])
+}
+
+// 语料切块：复用 lib/embedding.js 的 chunkMarkdown 与 embed，embedding 为 Float32 BLOB
+model SourceChunk {
+  id         String   @id @default(cuid())
+  docId      String
+  chunkIndex Int
+  text       String
+  embedding  Bytes?
+  dim        Int      @default(0)
+  model      String   @default("")
+
+  doc SourceDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@unique([docId, chunkIndex])
+  @@index([docId])
+}
+
+// 题目主表：只有 status=verified 才对用户可见；explanation 与 sources 强制非空（由管线保证）
+model Question {
+  id            String   @id @default(cuid())
+  leafId        String
+  type          String // single | multiple | short | coding
+  difficulty    String // easy | medium | hard
+  title         String
+  body          String
+  options       String   @default("[]") // JSON string[]
+  answer        String // 标准答案（选择题为字母，主观题为参考答案要点）
+  explanation   String   @default("") // 解析（为什么对/错、关键思路）
+  sources       String   @default("[]") // JSON [{url,title,snippet}]，每题必带出处
+  embedding     Bytes? // 题干+解析的向量，Float32 BLOB（同叶子去重/相似题检索）
+  dim           Int      @default(0)
+  model         String   @default("")
+  status        String   @default("draft") // draft | verified | rejected
+  source        String   @default("rag") // rag | migrated | manual
+  feedbackCount Int      @default(0)
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leaf        SkillLeaf        @relation(fields: [leafId], references: [id], onDelete: Cascade)
+  audits      QuestionAudit[]
+  paperItems  PaperItem[]
+  quizAnswers QuizAnswer[]
+
+  @@index([leafId, status])
+  @@index([status])
+  @@index([type])
+  @@index([difficulty])
+}
+
+// 题目质量审计：verifier 二审结论留痕（支持/驳回 + 原因 + 轮次）
+model QuestionAudit {
+  id         String   @id @default(cuid())
+  questionId String
+  verdict    String // supported | rejected
+  reason     String   @default("")
+  attempt    Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+// 试卷：题目以 PaperItem（ID 引用）组织，不再内嵌整题 JSON
+model Paper {
+  id         String   @id @default(cuid())
+  userId     String?
+  title      String
+  scope      String   @default("[]") // JSON leafKey[]，组卷覆盖范围
+  scorePer   Int      @default(5)
+  createdAt  DateTime @default(now())
+
+  user     User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    PaperItem[]
+  sessions QuizSession[]
+
+  @@index([userId])
+}
+
+model PaperItem {
+  id         String @id @default(cuid())
+  paperId    String
+  questionId String
+  order      Int
+  score      Int    @default(5)
+
+  paper    Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([paperId, questionId])
+  @@index([paperId])
+}
+
+// 答题会话：一次交卷一行；analysis 存交卷深度分析 JSON（错题精讲/薄弱报告/总评）
+model QuizSession {
+  id           String   @id @default(cuid())
+  userId       String?
+  paperId      String?
+  leafKey      String? // 单能力点练习时记录叶子
+  title        String
+  total        Int      @default(0)
+  correctCount Int      @default(0)
+  score        Int      @default(0) // 百分制
+  earnedScore  Float    @default(0) // 整卷加权实得分
+  totalScore   Float    @default(0)
+  kpReview     String   @default("[]") // JSON [{name,total,correct,rate}]
+  analysis     String? // JSON 交卷深度分析
+  createdAt    DateTime @default(now())
+
+  user    User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  paper   Paper?       @relation(fields: [paperId], references: [id], onDelete: SetNull)
+  answers QuizAnswer[]
+
+  @@index([userId])
+  @@index([paperId])
+  @@index([leafKey])
+}
+
+// 逐题作答明细：questionSnapshot 保留题干快照（题目后续修订/下架不影响历史复盘）
+model QuizAnswer {
+  id               String   @id @default(cuid())
+  sessionId        String
+  questionId       String
+  questionSnapshot String   @default("{}") // JSON 题目快照
+  userAnswer       String   @default("")
+  correct          Boolean? // null = 未判/主观题待判
+  scoreEarned      Float    @default(0)
+  judgeNote        String   @default("") // LLM 判分理由/错因
+  createdAt        DateTime @default(now())
+
+  session  QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+}
+
+// 题目填充任务账本：一叶子一行，断点续跑/幂等的依据
+model FillJobItem {
+  id            String    @id @default(cuid())
+  leafKey       String    @unique
+  status        String    @default("pending") // pending | materializing | filled | blocked | failed
+  verifiedCount Int       @default(0)
+  attempts      Int       @default(0)
+  lastError     String    @default("")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  leaf SkillLeaf @relation(fields: [leafKey], references: [leafKey], onDelete: Cascade)
+}
+
+// ============================================================
+// 划词翻译（v1.5）：中英术语库 / 译文缓存
+// ============================================================
+
+// 中英术语库：翻译前置匹配，保证术语一致（domain 与社区行业 id 对齐）
+model TermEntry {
+  id        String   @id @default(cuid())
+  zh        String
+  en        String
+  domain    String   @default("general") // general | frontend | backend | aigc | designer
+  note      String   @default("")
+  status    String   @default("active") // active | disabled
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([zh, en, domain])
+  @@index([domain])
+  @@index([zh])
+}
+
+// 译文缓存：内容寻址（hash = sha1(toLang|归一化原文)），命中直接返回，压掉重复请求延迟
+model TranslationCache {
+  id        String   @id @default(cuid())
+  hash      String   @unique
+  source    String
+  result    String
+  fromLang  String
+  toLang    String
+  terms     String   @default("[]") // JSON [{zh,en}]
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ============================================================
+// 学习流程（v1.2）：每日打卡 / 周复盘
+// 打卡用「本地日期字符串」定位（date 唯一），复盘以「本周一」为键（weekStart 唯一）
+// ============================================================
+
+// 每日打卡：一天一行（userId+date 唯一），taskIds 存当日勾选的任务 id JSON string[]
+model Checkin {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String // YYYY-MM-DD（本地时区）
+  minutes   Int      @default(0)
+  taskIds   String   @default("[]") // JSON string[]
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+// 每周复盘：一周一行（userId+weekStart 唯一），高效/低效/下一步改进三段式
+model WeeklyReview {
+  id        String   @id @default(cuid())
+  userId    String
+  weekStart String // 本周一 YYYY-MM-DD
+  good      String   @default("")
+  bad       String   @default("")
+  improve   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart])
+}
+
+// ============================================================
+// 微反馈归因闭环（灰度）：FeedbackEvent / LearnerEvent
+// 加性变更，不关联外键，userId/taskId 仅存字符串，避免历史数据耦合
+// ============================================================
+
+// 微反馈：用户只给 userGiven + reasonTag + detail，其余系统自动采集
+model FeedbackEvent {
+  id        String   @id @default(cuid())
+
+  userGiven   String // smooth | stuck | abandon
+  reasonTag   String? // environment | unclear | cannot_do | no_time | other
+  detail      String? // 用户选填（≤200 字）
+
+  taskId      String?
+  userId      String?
+  contextJson String? // JSON：{est_minutes, scaffold_level, acceptance_done/total, ...}
+
+  qualityScore Float? // 0–1 有效反馈判定
+  actionTaken  String? // 触发哪条干预（REASON_MAP）
+  planChanged  Boolean @default(false) // 是否真的改了计划
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([reasonTag])
+  @@index([createdAt])
+}
+
+// 学习行为埋点：支撑可执行率 / 超预算率等指标
+model LearnerEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  taskId    String?
+  type      String // task_start | task_complete | task_stuck | artifact_submit
+  payloadJson String?
+  createdAt DateTime @default(now())
+
+  @@index([taskId, type])
+  @@index([createdAt])
+}
+
+// ============================================================
+// 社区书籍书架（灰度）：电子教材元数据 + 本地文件
+// 加性变更；文件本体存 data/books/files，封面存 data/books/covers
+// ============================================================
+model Book {
+  id           String   @id @default(cuid())
+  title        String
+  author       String?
+  format       String // pdf | epub | txt | md | mobi | azw3
+  filePath     String?
+  fileSize     Int?
+  coverPath    String?
+  sourceUrl    String?
+  license      String?
+  industry     String?
+  tags         String?
+  textbookSlug String?
+  createdAt    DateTime @default(now())
+
+  @@index([industry])
+  @@index([createdAt])
+}
+
+// ============================================================
+// 充值与余额（v1.1）：兑换码 + 后台手动充值 + 余额按次扣费
+// 加性变更；金额一律用整数「分」存储，避免浮点误差
+// ============================================================
+
+// 兑换码：管理员批量生成，用户输入后一次性核销入账
+model RedeemCode {
+  id        String   @id @default(cuid())
+  code      String   @unique // 16 位大写字母数字（去除易混淆字符），展示时按 4 位分组
+  amountFen Int // 面额（分）
+  note      String   @default("") // 备注（批次/用途）
+  createdBy String? // 生成人（管理员用户名）
+  usedBy    String? // 核销用户 id
+  usedAt    DateTime? // 核销时间
+  createdAt DateTime @default(now())
+
+  @@index([usedBy])
+  @@index([createdAt])
+}
+
+// 充值订单：兑换码与后台手动充值各记一条，作为入账凭证
+model RechargeOrder {
+  id        String   @id @default(cuid())
+  userId    String
+  amountFen Int // 入账金额（分）
+  channel   String // redeem | manual
+  status    String   @default("paid") // paid（即时到账）；预留 pending/refunded
+  refCode   String? // 兑换码（channel=redeem）
+  note      String   @default("")
+  operator  String? // 后台操作人用户名（channel=manual）
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([channel])
+}
+
+// 余额流水：每次余额变动都留痕，balanceAfter 便于对账
+model WalletTxn {
+  id           String   @id @default(cuid())
+  userId       String
+  deltaFen     Int // 正数=入账，负数=扣费
+  type         String // recharge_redeem | recharge_manual | ai_consume | adjust
+  refId        String? // 订单 id / 兑换码 / AI action
+  balanceAfter Int // 变动后余额（分）
+  note         String   @default("")
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([type])
+}

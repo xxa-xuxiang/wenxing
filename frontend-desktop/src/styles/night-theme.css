@@ -1,0 +1,357 @@
+/* ============================================================
+   night-theme.css —— 夜间 UI 主题（可直接引入）
+   来源：学习规划向导诊断清单的暗色视觉体系
+   适用：Vue 3 + Vite；桌面端 Tauri 2 / 移动端 Vant 4 / admin-web
+   ------------------------------------------------------------
+   设计原则（今晚赶工务必遵守）：
+   1. 默认【不启用】，必须显式 <html data-night="on"> 才生效。
+      → 与现有主题系统的 data-theme（midnight/dawn）完全隔离，删属性即可回滚。
+   2. 所有变量走 CSS 自定义属性，不写死颜色，方便白天模式共存。
+   3. 组件类统一 .nt- 前缀，避免与你现有样式冲突。
+   ============================================================ */
+
+/* ---------- 1. 语义色板 ---------- */
+:root {
+  /* 中性（与主题无关，浅色夜间共用） */
+  --nt-radius: 14px;
+  --nt-radius-sm: 10px;
+  --nt-radius-lg: 18px;
+  --nt-gap: 12px;
+  --nt-font: -apple-system, BlinkMacSystemFont, "PingFang SC",
+             "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --nt-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* 默认（浅色）—— 保证不破坏你现有页面 */
+  --nt-bg: #f6f7fb;
+  --nt-bg-2: #ffffff;
+  --nt-card: #ffffff;
+  --nt-line: #e2e6f0;
+  --nt-fg: #1a1f2e;
+  --nt-fg-2: #4a5468;
+  --nt-fg-3: #7b8499;
+  --nt-acc: #3f5fe0;
+  --nt-acc-2: #7a4fe0;
+  --nt-ok: #12996a;
+  --nt-warn: #c9860a;
+  --nt-bad: #d64151;
+}
+
+/* 现有「极夜黑」主题：新旧组件视觉保持一致，避免夜间 UI 关闭时出现白卡片 */
+html[data-theme="midnight"] {
+  --nt-bg: #0b0d13;
+  --nt-bg-2: #111520;
+  --nt-card: #151a26;
+  --nt-line: #232a3a;
+  --nt-fg: #e6e9f2;
+  --nt-fg-2: #a4adc2;
+  --nt-fg-3: #7c8599;
+  --nt-acc: #7c9cff;
+  --nt-acc-2: #b18cff;
+  --nt-ok: #3ddc97;
+  --nt-warn: #ffc861;
+  --nt-bad: #ff6b7a;
+}
+
+/* 夜间主题：唯一开关（独立于 data-theme，避免覆盖现有极夜黑/曙光白）
+   放在 midnight 之后，保证「曙光白 + 夜间 UI 开启」时暗色生效 */
+html[data-night="on"] {
+  --nt-bg: #0b0d13;
+  --nt-bg-2: #111520;
+  --nt-card: #151a26;
+  --nt-line: #232a3a;
+  --nt-fg: #e6e9f2;
+  --nt-fg-2: #a4adc2;
+  --nt-fg-3: #7c8599;
+  --nt-acc: #7c9cff;
+  --nt-acc-2: #b18cff;
+  --nt-ok: #3ddc97;
+  --nt-warn: #ffc861;
+  --nt-bad: #ff6b7a;
+  color-scheme: dark;
+}
+
+/* ---------- 2. 基础重置（建议只作用于 .nt-root 容器） ---------- */
+.nt-root {
+  background: var(--nt-bg);
+  color: var(--nt-fg);
+  font-family: var(--nt-font);
+  font-size: 15px;
+  line-height: 1.72;
+  -webkit-font-smoothing: antialiased;
+}
+.nt-root a { color: var(--nt-acc); text-decoration: none; }
+.nt-root a:hover { text-decoration: underline; }
+.nt-root b, .nt-root strong { color: var(--nt-fg); font-weight: 600; }
+
+/* ---------- 3. 卡片 ---------- */
+.nt-card {
+  background: var(--nt-card);
+  border: 1px solid var(--nt-line);
+  border-radius: var(--nt-radius);
+  padding: 13px 14px;
+}
+.nt-card--accent { border-left: 3px solid var(--nt-acc); }
+.nt-card--ok    { border-left: 3px solid var(--nt-ok); }
+.nt-card--warn  { border-left: 3px solid var(--nt-warn); }
+.nt-card--bad   { border-left: 3px solid var(--nt-bad); }
+
+.nt-card__title {
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 0 0 6px;
+}
+.nt-card__desc { font-size: 14px; color: var(--nt-fg-2); margin: 0; }
+
+/* ---------- 4. 徽章 / 标签 ---------- */
+.nt-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.7;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.nt-badge--p0 { color: var(--nt-bad);  border-color: var(--nt-bad);  background: color-mix(in srgb, var(--nt-bad) 16%, transparent); }
+.nt-badge--p1 { color: var(--nt-warn); border-color: var(--nt-warn); background: color-mix(in srgb, var(--nt-warn) 16%, transparent); }
+.nt-badge--p2 { color: var(--nt-ok);   border-color: var(--nt-ok);   background: color-mix(in srgb, var(--nt-ok) 14%, transparent); }
+.nt-badge--muted { color: var(--nt-fg-3); border-color: var(--nt-line); }
+
+/* ---------- 5. 按钮 ---------- */
+.nt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--nt-radius-sm);
+  border: 1px solid var(--nt-line);
+  background: var(--nt-card);
+  color: var(--nt-fg);
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform .08s ease, opacity .15s ease;
+}
+.nt-btn:hover { opacity: .88; }
+.nt-btn:active { transform: scale(.97); }
+.nt-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.nt-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--nt-acc), var(--nt-acc-2));
+  color: #fff;
+  font-weight: 600;
+}
+.nt-btn--ok   { color: var(--nt-ok);   border-color: var(--nt-ok); }
+.nt-btn--bad  { color: var(--nt-bad);  border-color: var(--nt-bad); }
+.nt-btn--ghost { background: transparent; }
+.nt-btn--sm { min-height: 30px; padding: 0 10px; font-size: 13px; }
+
+/* ---------- 6. 表格（可横向滚动，移动端友好） ---------- */
+.nt-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--nt-line);
+  border-radius: var(--nt-radius);
+  background: var(--nt-card);
+}
+.nt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.nt-table th,
+.nt-table td {
+  padding: 9px 11px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--nt-line);
+}
+.nt-table th {
+  color: var(--nt-fg);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--nt-acc) 12%, var(--nt-card));
+}
+.nt-table tr:last-child td { border-bottom: 0; }
+
+/* ---------- 7. 列表 / 步骤 ---------- */
+.nt-steps { list-style: none; margin: 0; padding: 0; counter-reset: nt-step; }
+.nt-steps li {
+  counter-increment: nt-step;
+  position: relative;
+  padding: 7px 0 7px 30px;
+  font-size: 14px;
+  color: var(--nt-fg-2);
+  border-bottom: 1px dashed var(--nt-line);
+}
+.nt-steps li::before {
+  content: counter(nt-step);
+  position: absolute;
+  left: 0; top: 8px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--nt-acc) 20%, transparent);
+  color: var(--nt-acc);
+  font-size: 11.5px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.nt-steps li:last-child { border-bottom: 0; }
+
+/* 验收清单（可勾选） */
+.nt-check { list-style: none; margin: 0; padding: 0; }
+.nt-check li {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 6px 0; font-size: 14px; color: var(--nt-fg-2);
+}
+.nt-check li::before {
+  content: "";
+  flex: none;
+  width: 16px; height: 16px;
+  margin-top: 4px;
+  border: 1.5px solid var(--nt-fg-3);
+  border-radius: 4px;
+}
+.nt-check li.is-done { color: var(--nt-fg-3); text-decoration: line-through; }
+.nt-check li.is-done::before {
+  border-color: var(--nt-ok);
+  background: var(--nt-ok);
+  content: "✓";
+  color: #08121a;
+  font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ---------- 8. 进度条 / 顶栏 ---------- */
+.nt-progress {
+  height: 3px;
+  background: var(--nt-line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.nt-progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--nt-acc), var(--nt-acc-2));
+  transition: width .25s ease;
+}
+
+.nt-topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--nt-bg) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--nt-line);
+}
+.nt-topbar__title { flex: 1; font-size: 15px; font-weight: 700; }
+
+/* ---------- 9. 数值卡（KPI） ---------- */
+.nt-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--nt-gap);
+}
+.nt-kpi {
+  background: var(--nt-card);
+  border: 1px solid var(--nt-line);
+  border-radius: var(--nt-radius);
+  padding: 12px;
+}
+.nt-kpi__num {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+  background: linear-gradient(135deg, var(--nt-acc), var(--nt-acc-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nt-kpi__num small { font-size: 13px; font-weight: 600; margin-left: 3px; }
+.nt-kpi__label { font-size: 12.5px; color: var(--nt-fg-2); margin-top: 5px; }
+
+/* ---------- 10. 提示条 ---------- */
+.nt-note {
+  background: var(--nt-card);
+  border: 1px dashed var(--nt-line);
+  border-radius: var(--nt-radius-sm);
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: var(--nt-fg-2);
+}
+.nt-alert {
+  border-radius: var(--nt-radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid;
+}
+.nt-alert--warn {
+  color: var(--nt-warn);
+  border-color: color-mix(in srgb, var(--nt-warn) 35%, transparent);
+  background: color-mix(in srgb, var(--nt-warn) 10%, transparent);
+}
+.nt-alert--ok {
+  color: var(--nt-ok);
+  border-color: color-mix(in srgb, var(--nt-ok) 35%, transparent);
+  background: color-mix(in srgb, var(--nt-ok) 10%, transparent);
+}
+
+/* ---------- 11. 代码块 ---------- */
+.nt-code {
+  font-family: var(--nt-mono);
+  font-size: 12.5px;
+  background: var(--nt-bg-2);
+  border: 1px solid var(--nt-line);
+  border-radius: var(--nt-radius-sm);
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--nt-fg-2);
+}
+
+/* ---------- 12. 空状态 ---------- */
+.nt-empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--nt-fg-3);
+  font-size: 14px;
+}
+
+/* ============================================================
+   13. 移动端 Vant 4 变量覆盖（仅 frontent-phone 引入）
+   放在引入 vant 样式【之后】，否则不生效。
+   ============================================================ */
+[data-night="on"] {
+  --van-background:            var(--nt-bg);
+  --van-background-2:          var(--nt-bg-2);
+  --van-text-color:            var(--nt-fg);
+  --van-text-color-2:          var(--nt-fg-2);
+  --van-text-color-3:          var(--nt-fg-3);
+  --van-border-color:          var(--nt-line);
+  --van-cell-background:       var(--nt-card);
+  --van-nav-bar-background:    var(--nt-bg-2);
+  --van-nav-bar-text-color:    var(--nt-fg);
+  --van-button-default-background: var(--nt-card);
+  --van-button-default-color:  var(--nt-fg);
+  --van-primary-color:         var(--nt-acc);
+  --van-success-color:         var(--nt-ok);
+  --van-warning-color:         var(--nt-warn);
+  --van-danger-color:          var(--nt-bad);
+  --van-tag-default-color:     var(--nt-fg-2);
+  --van-dialog-background:     var(--nt-card);
+  --van-field-label-color:     var(--nt-fg-2);
+}
+
+/* ============================================================
+   14. 降级兜底：不支持 color-mix 的旧内核（Tauri WebView2 老版本）
+   放在最后，自动覆盖前面的 color-mix 写法。
+   ============================================================ */
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  [data-night="on"] .nt-badge--p0 { background: rgba(255,107,122,.16); }
+  [data-night="on"] .nt-badge--p1 { background: rgba(255,200,97,.16); }
+  [data-night="on"] .nt-badge--p2 { background: rgba(61,220,151,.14); }
+  [data-night="on"] .nt-table th  { background: #1b2233; }
+  [data-night="on"] .nt-steps li::before { background: #232a3a; }
+  [data-night="on"] .nt-alert--warn { background: rgba(255,200,97,.10); }
+  [data-night="on"] .nt-alert--ok   { background: rgba(61,220,151,.10); }
+}

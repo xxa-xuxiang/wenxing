@@ -1,0 +1,79 @@
+/* 问星 v0.1 — 毛玻璃工具类 */
+.wx-glass {
+  background: var(--wx-glass-bg);
+  backdrop-filter: blur(var(--wx-glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--wx-glass-blur)) saturate(160%);
+  border: 1px solid var(--wx-glass-border);
+  box-shadow: var(--wx-shadow-md), inset 0 1px 0 color-mix(in srgb, var(--wx-ink) 6%, transparent);
+  border-radius: var(--wx-glass-radius);
+}
+
+.wx-glass-strong {
+  background: var(--wx-glass-bg-strong);
+  backdrop-filter: blur(calc(var(--wx-glass-blur) + 4px)) saturate(180%);
+  -webkit-backdrop-filter: blur(calc(var(--wx-glass-blur) + 4px)) saturate(180%);
+  border: 1px solid var(--wx-glass-border);
+  box-shadow: var(--wx-shadow-lg), inset 0 1px 0 color-mix(in srgb, var(--wx-ink) 8%, transparent);
+  border-radius: var(--wx-glass-radius);
+}
+
+.wx-glass-hover {
+  transition:
+    background var(--wx-duration-mid) var(--wx-ease-out-soft),
+    border-color var(--wx-duration-mid) var(--wx-ease-out-soft),
+    transform var(--wx-duration-mid) var(--wx-ease-spring),
+    box-shadow var(--wx-duration-mid) var(--wx-ease-out-soft);
+}
+
+.wx-glass-hover:hover {
+  background: var(--wx-glass-bg-strong);
+  border-color: color-mix(in srgb, var(--wx-color-primary) 45%, transparent);
+  transform: translateY(-2px);
+  box-shadow: var(--wx-shadow-lg), var(--wx-shadow-glow);
+}
+
+/* 渐变文字 */
+.wx-text-gradient {
+  background: var(--wx-gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 渐变按钮 */
+.wx-btn-gradient {
+  background: var(--wx-gradient-primary);
+  color: var(--wx-text-on-accent);
+  border-radius: var(--wx-radius-pill);
+  padding: 10px 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--wx-color-primary) 35%, transparent);
+  transition:
+    transform var(--wx-duration-fast) var(--wx-ease-spring),
+    box-shadow var(--wx-duration-fast) var(--wx-ease-out-soft),
+    filter var(--wx-duration-fast) var(--wx-ease-out-soft);
+}
+
+.wx-btn-gradient:hover {
+  transform: translateY(-1px) scale(1.02);
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--wx-color-primary) 50%, transparent);
+}
+
+.wx-btn-gradient:active {
+  transform: translateY(0) scale(0.98);
+  filter: brightness(0.95);
+}
+
+/* 状态色点 */
+.wx-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+.wx-dot-unknown { background: var(--wx-state-unknown); color: var(--wx-state-unknown); }
+.wx-dot-light    { background: var(--wx-state-light);    color: var(--wx-state-light); }
+.wx-dot-deep     { background: var(--wx-state-deep);     color: var(--wx-state-deep); }

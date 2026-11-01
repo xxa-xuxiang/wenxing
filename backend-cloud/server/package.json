@@ -1,0 +1,32 @@
+{
+  "name": "wenxing-server",
+  "version": "1.1.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "dev": "node --env-file=.env index.js",
+    "start": "node --env-file=.env index.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "db:backup": "node --env-file=.env scripts/backup-data.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "adm-zip": "^0.6.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "prisma": "^6.19.3"
+  }
+}
